@@ -4,6 +4,10 @@ Paste Bagpipe Music Writer (BWW) text into the [BWW Player](https://matthew-chen
 and click **Play**. Use **Stop** to cancel rendering or stop playback. The
 status area shows progress and errors.
 
+The player uses permissive parsing. If pybww can recover a playable tune,
+playback proceeds and any parse warnings and errors stay visible below the
+status.
+
 Open **Playback options** to override the tune’s tempo, set the target grace
 note duration, choose a sound, or add bass and tenor drones. The defaults are
 the tune’s tempo (90 BPM if unspecified), 25 ms grace notes, chanter sound,
