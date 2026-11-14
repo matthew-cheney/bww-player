@@ -8,10 +8,20 @@ body {
   margin: 0;
 }
 
-main {
+main,
+.site-footer {
   max-width: 44rem;
   margin: 2rem auto;
   padding-inline: 1rem;
+}
+
+.site-footer {
+  font-size: 0.875rem;
+}
+
+.release-status {
+  font-size: 0.875rem;
+  font-weight: normal;
 }
 
 label {
