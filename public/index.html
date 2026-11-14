@@ -13,6 +13,29 @@
       <label for="bww">Bagpipe Music Writer text</label>
       <textarea id="bww" rows="12" spellcheck="false" autocomplete="off"
         placeholder="Paste a BWW tune here"></textarea>
+      <details class="playback-options">
+        <summary>Playback options</summary>
+        <div class="option-fields">
+          <div>
+            <label for="bpm">Tempo (BPM)</label>
+            <input id="bpm" type="number" min="0" step="any" aria-describedby="bpm-help">
+            <small id="bpm-help">Leave blank to use the tune’s tempo or 90 BPM.</small>
+          </div>
+          <div>
+            <label for="grace-ms">Grace note duration (ms)</label>
+            <input id="grace-ms" type="number" min="0" step="any" value="25" required>
+          </div>
+          <div>
+            <label for="sound">Sound</label>
+            <select id="sound">
+              <option value="chanter">Chanter</option>
+              <option value="chanter-old">Original chanter</option>
+              <option value="simple">Simple tone</option>
+            </select>
+          </div>
+          <label class="drone-option"><input id="drone" type="checkbox"> Add bass and tenor drones</label>
+        </div>
+      </details>
       <div class="controls">
         <button id="play" type="button" disabled>Play</button>
         <button id="stop" type="button" disabled>Stop</button>

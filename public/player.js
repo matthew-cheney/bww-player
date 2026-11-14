@@ -1,4 +1,9 @@
 const input = document.querySelector("#bww");
+const playbackOptions = document.querySelector(".playback-options");
+const bpmInput = document.querySelector("#bpm");
+const graceInput = document.querySelector("#grace-ms");
+const soundInput = document.querySelector("#sound");
+const droneInput = document.querySelector("#drone");
 const playButton = document.querySelector("#play");
 const stopButton = document.querySelector("#stop");
 const status = document.querySelector("#status");
@@ -87,6 +92,22 @@ playButton.addEventListener("click", () => {
     return;
   }
 
+  const bpm = bpmInput.value === "" ? null : bpmInput.valueAsNumber;
+  if (!bpmInput.validity.valid || (bpm !== null && (!Number.isFinite(bpm) || bpm <= 0))) {
+    showStatus("Enter a tempo greater than zero, or leave it blank.");
+    playbackOptions.open = true;
+    bpmInput.focus();
+    return;
+  }
+
+  const graceMs = graceInput.valueAsNumber;
+  if (!graceInput.validity.valid || !Number.isFinite(graceMs)) {
+    showStatus("Enter a grace note duration of zero or greater.");
+    playbackOptions.open = true;
+    graceInput.focus();
+    return;
+  }
+
   const playback = { rendering: true };
   activePlayback = playback;
   try {
@@ -105,7 +126,9 @@ playButton.addEventListener("click", () => {
   try {
     showStatus(worker ? "Rendering tune…" : "Loading Pyodide and pybww…");
     worker ??= createWorker();
-    worker.postMessage(text);
+    worker.postMessage({
+      text, bpm, graceMs, sound: soundInput.value, drone: droneInput.checked,
+    });
   } catch (error) {
     resetWorker();
     finish(playback, `Loading error: ${error.message}`);
