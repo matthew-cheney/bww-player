@@ -33,6 +33,35 @@ textarea {
   margin-top: 0.75rem;
 }
 
+.playback-options {
+  margin-block: 0.75rem;
+}
+
+.option-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 0.75rem;
+}
+
+.option-fields input,
+.option-fields select {
+  font: inherit;
+}
+
+.option-fields input[type="number"] {
+  width: 7rem;
+}
+
+.option-fields small {
+  display: block;
+}
+
+.drone-option {
+  flex-basis: 100%;
+  margin: 0;
+}
+
 button {
   font: inherit;
   padding: 0.4rem 1rem;

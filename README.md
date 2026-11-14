@@ -4,6 +4,11 @@ Paste Bagpipe Music Writer (BWW) text into the [BWW Player](https://matthew-chen
 and click **Play**. Use **Stop** to cancel rendering or stop playback. The
 status area shows progress and errors.
 
+Open **Playback options** to override the tune’s tempo, set the target grace
+note duration, choose a sound, or add bass and tenor drones. The defaults are
+the tune’s tempo (90 BPM if unspecified), 25 ms grace notes, chanter sound,
+and drones off. Changes apply the next time you press **Play**.
+
 The browser loads Pyodide 0.27.7 from jsDelivr and a pinned pybww wheel from
 the site. Pasted text stays in the browser. pybww handles parsing, timing,
 embellishments, and WAV synthesis in a Web Worker.

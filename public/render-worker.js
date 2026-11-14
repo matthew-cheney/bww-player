@@ -13,7 +13,7 @@ from pybww import ParseError, Tune, parse_text
 if not callable(getattr(Tune, "to_wav", None)):
     raise RuntimeError("The pybww wheel must provide Tune.to_wav().")
 
-def render_bww(text):
+def render_bww(text, bpm, grace_ms, sound, drone):
     try:
         result = parse_text(text, strict=True)
     except ParseError as error:
@@ -24,14 +24,14 @@ def render_bww(text):
         return "Parse error: No playable tune was found."
 
     try:
-        return result.tune.to_wav()
+        return result.tune.to_wav(bpm=bpm, grace_ms=grace_ms, sound=sound, drone=drone)
     except Exception as error:
         return f"Rendering error: {error}"
 `);
   return pyodide.globals.get("render_bww");
 }
 
-self.onmessage = async ({ data: text }) => {
+self.onmessage = async ({ data: { text, bpm, graceMs, sound, drone } }) => {
   let stage = "Loading";
   try {
     if (!renderer) {
@@ -41,7 +41,7 @@ self.onmessage = async ({ data: text }) => {
 
     stage = "Rendering";
     self.postMessage({ status: "Rendering tune…" });
-    const result = renderer(text);
+    const result = renderer(text, bpm, graceMs, sound, drone);
     if (typeof result === "string") {
       self.postMessage({ error: result });
       return;
