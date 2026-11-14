@@ -7,6 +7,7 @@ const droneInput = document.querySelector("#drone");
 const playButton = document.querySelector("#play");
 const stopButton = document.querySelector("#stop");
 const status = document.querySelector("#status");
+const diagnosticsList = document.querySelector("#diagnostics");
 
 let audioContext;
 let worker;
@@ -16,6 +17,16 @@ function showStatus(message) {
   status.textContent = message;
   playButton.disabled = Boolean(activePlayback);
   stopButton.disabled = !activePlayback;
+}
+
+function showDiagnostics(diagnostics) {
+  const items = diagnostics.map(([severity, message]) => {
+    const item = document.createElement("li");
+    item.textContent = `${severity}: ${message}`;
+    return item;
+  });
+  diagnosticsList.replaceChildren(...items);
+  diagnosticsList.hidden = items.length === 0;
 }
 
 function finish(playback, message) {
@@ -62,6 +73,7 @@ function createWorker() {
       return;
     }
     playback.rendering = false;
+    if (data.diagnostics) showDiagnostics(data.diagnostics);
     if (data.error) {
       if (data.resetWorker) resetWorker();
       finish(playback, data.error);
@@ -86,6 +98,7 @@ function createWorker() {
 }
 
 playButton.addEventListener("click", () => {
+  showDiagnostics([]);
   const text = input.value;
   if (!text.trim()) {
     showStatus("Paste a BWW tune first.");

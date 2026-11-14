@@ -8,25 +8,23 @@ async function loadRenderer() {
   const pyodide = await loadPyodide({ indexURL: PYODIDE_URL });
   await pyodide.loadPackage(new URL(WHEEL, self.location.href).href);
   pyodide.runPython(`
-from pybww import ParseError, Tune, parse_text
+from pybww import Tune, parse_text
 
 if not callable(getattr(Tune, "to_wav", None)):
     raise RuntimeError("The pybww wheel must provide Tune.to_wav().")
 
 def render_bww(text, bpm, grace_ms, sound, drone):
-    try:
-        result = parse_text(text, strict=True)
-    except ParseError as error:
-        messages = [item.message for item in error.diagnostics if item.severity == "error"]
-        return "Parse error: " + " ".join(messages)
+    result = parse_text(text, strict=False)
+    diagnostics = [(item.severity, item.message) for item in result.diagnostics]
 
     if result.tune is None:
-        return "Parse error: No playable tune was found."
+        return diagnostics, "Parse error: No playable tune was found.", None
 
     try:
-        return result.tune.to_wav(bpm=bpm, grace_ms=grace_ms, sound=sound, drone=drone)
+        wav = result.tune.to_wav(bpm=bpm, grace_ms=grace_ms, sound=sound, drone=drone)
     except Exception as error:
-        return f"Rendering error: {error}"
+        return diagnostics, f"Rendering error: {error}", None
+    return diagnostics, None, wav
 `);
   return pyodide.globals.get("render_bww");
 }
@@ -42,14 +40,9 @@ self.onmessage = async ({ data: { text, bpm, graceMs, sound, drone } }) => {
     stage = "Rendering";
     self.postMessage({ status: "Rendering tune…" });
     const result = renderer(text, bpm, graceMs, sound, drone);
-    if (typeof result === "string") {
-      self.postMessage({ error: result });
-      return;
-    }
-
     try {
-      const wav = result.toJs();
-      self.postMessage({ wav }, [wav.buffer]);
+      const [diagnostics, error, wav] = result.toJs();
+      self.postMessage({ diagnostics, error, wav }, wav ? [wav.buffer] : []);
     } finally {
       result.destroy();
     }
