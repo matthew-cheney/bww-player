@@ -5,17 +5,17 @@
 }
 
 body {
-  margin: 0;
-}
-
-main,
-.site-footer {
   max-width: 44rem;
-  margin: 2rem auto;
-  padding-inline: 1rem;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+h1 {
+  margin-top: 0;
 }
 
 .site-footer {
+  margin-top: 2rem;
   font-size: 0.875rem;
 }
 
