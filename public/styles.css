@@ -1,58 +1,249 @@
 :root {
   color-scheme: light dark;
-  font-family: system-ui, sans-serif;
+  font-family: "DM Sans", system-ui, sans-serif;
   line-height: 1.5;
+  --page: #f2efe9;
+  --panel: #fffcf7;
+  --field: #f8f5ef;
+  --ink: #232c35;
+  --muted: #555f67;
+  --border: #d9d3c9;
+  --header: #172d3c;
+  --accent: #225f68;
+  --focus: #167782;
+  --disabled: #e9e5dd;
+  --error: #943f2b;
+  --shadow: 0 12px 35px #2537490b;
+  --page-width: 76rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --page: #141e27;
+    --panel: #1c2a35;
+    --field: #16232d;
+    --ink: #f3eee4;
+    --muted: #bbcad0;
+    --border: #42515c;
+    --header: #101c26;
+    --accent: #225f68;
+    --focus: #85cdd5;
+    --disabled: #293945;
+    --error: #ffad94;
+    --shadow: none;
+  }
+}
+
+* {
+  box-sizing: border-box;
 }
 
 body {
   margin: 0;
+  background: var(--page);
+  color: var(--ink);
 }
 
-main,
-.site-footer {
-  max-width: 44rem;
-  margin: 2rem auto;
-  padding-inline: 1rem;
+.site-header {
+  background: var(--header);
+  color: #fff9ec;
+  border-bottom: 3px solid #b98156;
 }
 
+.site-heading,
+.workspace,
 .site-footer {
-  font-size: 0.875rem;
+  width: min(var(--page-width), calc(100% - 3rem));
+  margin-inline: auto;
+}
+
+.site-heading {
+  display: flex;
+  align-items: center;
+  gap: clamp(0.9rem, 2vw, 1.5rem);
+  padding-block: clamp(1.6rem, 4vw, 3.4rem);
+}
+
+.site-mark {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: clamp(2.9rem, 6vw, 4.25rem);
+  aspect-ratio: 1;
+  border: 1px solid #8d7461;
+  border-radius: 0.85rem;
+  color: #edbf93;
+  background: #ffffff0a;
+}
+
+.site-mark svg {
+  display: block;
+  width: 64%;
+}
+
+.site-title {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.2rem 0.75rem;
+}
+
+h1,
+h2 {
+  font-family: "Instrument Serif", Georgia, serif;
+  font-weight: 400;
+  line-height: 1.12;
+  margin: 0;
+}
+
+h1 {
+  font-size: clamp(2.1rem, 5vw, 3.9rem);
+  letter-spacing: -0.035em;
+}
+
+.site-heading p {
+  margin: 0.35rem 0 0;
+  color: #d7e2e6;
+  font-size: 0.95rem;
 }
 
 .release-status {
-  font-size: 0.875rem;
-  font-weight: normal;
+  padding: 0.12rem 0.45rem;
+  border: 1px solid #8d7461;
+  border-radius: 0.3rem;
+  color: #edbf93;
+  font-size: 0.72rem;
 }
 
-label {
-  display: block;
-  margin-bottom: 0.5rem;
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(19rem, 2fr) minmax(0, 3fr);
+  align-items: start;
+  gap: clamp(1rem, 2vw, 1.6rem);
+  margin-block: clamp(1.25rem, 3vw, 2.4rem) 0;
+}
+
+.panel {
+  min-width: 0;
+  padding: clamp(1rem, 2.2vw, 1.65rem);
+  border: 1px solid var(--border);
+  border-radius: 0.9rem;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+h2 {
+  font-size: 1.75rem;
+  margin-bottom: 1rem;
+}
+
+textarea,
+.option-fields input[type="number"],
+.option-fields select {
+  border: 1px solid var(--border);
+  border-radius: 0.45rem;
+  background: var(--field);
+  color: var(--ink);
 }
 
 textarea {
-  box-sizing: border-box;
+  display: block;
   width: 100%;
-  padding: 0.75rem;
-  font: 1rem/1.5 monospace;
+  min-height: 9rem;
+  padding: 0.85rem;
+  font: 0.95rem/1.65 "IBM Plex Mono", ui-monospace, monospace;
   resize: vertical;
+}
+
+textarea::placeholder {
+  color: var(--muted);
+}
+
+:where(a, button, input, select, textarea, summary):focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+}
+
+.transport {
+  margin-top: 1rem;
+  padding: 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: 0.65rem;
+  background: var(--field);
 }
 
 .controls {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.5rem;
-  margin-top: 0.75rem;
+}
+
+button {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 2.6rem;
+  padding: 0.35rem 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: 0.45rem;
+  background: var(--panel);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+#play {
+  min-width: 6rem;
+}
+
+#play:enabled {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: white;
+}
+
+#play:enabled:hover {
+  background: #154952;
+}
+
+#stop:enabled:hover {
+  background: var(--page);
+  border-color: var(--muted);
+}
+
+button:disabled {
+  color: var(--muted);
+  background: var(--disabled);
+  cursor: default;
+}
+
+.play-icon {
+  width: 0;
+  height: 0;
+  border-block: 0.34rem solid transparent;
+  border-left: 0.52rem solid currentColor;
+}
+
+#play[aria-busy="true"] .play-icon {
+  display: none;
+}
+
+.stop-icon {
+  width: 0.59rem;
+  height: 0.59rem;
+  border-radius: 1px;
+  background: currentColor;
 }
 
 .playback-position {
   display: grid;
   grid-template-columns: 1fr auto;
-  gap: 0.25rem 0.75rem;
-  margin-top: 0.75rem;
-  font-size: 0.875rem;
-}
-
-.playback-position label {
-  margin: 0;
+  gap: 0.15rem 0.5rem;
+  margin-top: 0.8rem;
+  font-size: 0.8rem;
+  color: var(--muted);
 }
 
 #playback-time {
@@ -62,16 +253,92 @@ textarea {
 #playback-position {
   grid-column: 1 / -1;
   width: 100%;
+  height: 1.35rem;
   margin: 0;
 }
 
+input {
+  accent-color: var(--focus);
+}
+
+#status {
+  min-height: 1.5em;
+  margin: 0.7rem 0;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+#diagnostics,
+#score-error {
+  color: var(--error);
+  font-size: 0.875rem;
+}
+
+#diagnostics {
+  padding-inline-start: 1.25rem;
+  overflow-wrap: anywhere;
+}
+
+.playback-options {
+  border-top: 1px solid var(--border);
+  padding-top: 0.65rem;
+  font-size: 0.875rem;
+}
+
+.playback-options summary {
+  width: fit-content;
+  padding-block: 0.25rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.option-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem 1rem;
+  margin-top: 0.7rem;
+}
+
+.option-fields label,
+.option-fields small {
+  display: block;
+}
+
+.option-fields small {
+  margin-top: 0.25rem;
+  color: var(--muted);
+}
+
+.option-fields input[type="number"],
+.option-fields select {
+  min-height: 2.25rem;
+  margin-top: 0.2rem;
+  padding: 0.25rem 0.45rem;
+  font: inherit;
+}
+
+.option-fields input[type="number"] {
+  width: 7rem;
+}
+
+.drone-option {
+  flex-basis: 100%;
+}
+
+.score-display {
+  position: relative;
+  border: 1px solid var(--border);
+  border-radius: 0.55rem;
+  background: var(--field);
+  overflow: hidden;
+}
+
 #score {
-  min-height: 6rem;
-  border: 1px solid GrayText;
-  border-radius: 0.25rem;
+  min-height: clamp(15rem, 36vw, 27rem);
 }
 
 #score:not(:empty) {
+  padding: clamp(0.4rem, 1vw, 0.75rem);
   background: white;
   color: #171717;
   color-scheme: light;
@@ -82,36 +349,65 @@ textarea {
   fill: currentColor;
 }
 
-.playback-options {
-  margin-block: 0.75rem;
+#score-loading,
+.score-placeholder {
+  position: absolute;
+  inset: 0;
+  margin: auto;
 }
 
-.option-fields {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  margin-top: 0.75rem;
+.score-placeholder {
+  display: none;
+  width: min(17rem, calc(100% - 2rem));
+  height: fit-content;
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--muted);
+  pointer-events: none;
 }
 
-.option-fields input,
-.option-fields select {
-  font: inherit;
-}
-
-.option-fields input[type="number"] {
-  width: 7rem;
-}
-
-.option-fields small {
+.score-panel:has(#score-error[hidden]) #score:empty:not([aria-busy="true"]) + .score-placeholder {
   display: block;
 }
 
-.drone-option {
-  flex-basis: 100%;
-  margin: 0;
+.score-placeholder::before {
+  content: "";
+  display: block;
+  width: 100%;
+  height: 2.125rem;
+  margin-bottom: 1rem;
+  background: repeating-linear-gradient(to bottom, var(--border) 0 1px, transparent 1px 8px);
 }
 
-button {
-  font: inherit;
-  padding: 0.4rem 1rem;
+.site-footer {
+  padding-block: 1.25rem 2rem;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.site-footer a {
+  color: inherit;
+  text-underline-offset: 0.2em;
+}
+
+.site-footer a:hover {
+  color: var(--ink);
+}
+
+@media (max-width: 50rem) {
+  .workspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  textarea {
+    height: 11rem;
+  }
+}
+
+@media (max-width: 32rem) {
+  .site-heading,
+  .workspace,
+  .site-footer {
+    width: calc(100% - 1.5rem);
+  }
 }

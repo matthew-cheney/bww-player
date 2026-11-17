@@ -9,52 +9,88 @@
     <script src="player.js" defer></script>
   </head>
   <body>
-    <main>
-      <h1>BWW Player <small class="release-status">Beta</small></h1>
-      <label for="bww">Bagpipe Music Writer text</label>
-      <textarea id="bww" rows="12" spellcheck="false" autocomplete="off"
-        placeholder="Paste a BWW tune here"></textarea>
-      <details class="playback-options">
-        <summary>Playback options</summary>
-        <div class="option-fields">
-          <div>
-            <label for="bpm">Tempo (BPM)</label>
-            <input id="bpm" type="number" min="0" step="any" aria-describedby="bpm-help">
-            <small id="bpm-help">Leave blank to use the tune’s tempo or 90 BPM.</small>
+    <header class="site-header">
+      <div class="site-heading">
+        <span class="site-mark" aria-hidden="true">
+          <svg viewBox="0 0 48 48" fill="none" focusable="false">
+            <g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M15 29 6 6m14 21L15 5m10 22L24 9m5 18 6-10m-1 16 7 11"
+                stroke-width="3"/>
+              <path d="m3.5 7 5-2m4 1 5-1m4 4 5-.3M38.5 45l5-3" stroke-width="2.5"/>
+            </g>
+            <path d="M6 37c0-6 4.5-10 12-11l11-2c4.5-.8 8 2.1 8 6 0 4.8-4.8 7.3-9.4 9
+              C23 40.8 18.5 44 13.3 44 9 44 6 41.2 6 37Z" fill="currentColor"/>
+          </svg>
+        </span>
+        <div>
+          <div class="site-title">
+            <h1>BWW Player</h1>
+            <small class="release-status">Beta</small>
           </div>
-          <div>
-            <label for="grace-ms">Grace note duration (ms)</label>
-            <input id="grace-ms" type="number" min="0" step="any" value="25" required>
-          </div>
-          <div>
-            <label for="sound">Sound</label>
-            <select id="sound">
-              <option value="chanter">Chanter</option>
-              <option value="chanter-old">Original chanter</option>
-              <option value="simple">Simple tone</option>
-            </select>
-          </div>
-          <label class="drone-option"><input id="drone" type="checkbox"> Add bass and tenor drones</label>
+          <p>Read and play Bagpipe Music Writer tunes.</p>
         </div>
-      </details>
-      <div class="controls">
-        <button id="play" type="button" disabled>Play</button>
-        <button id="stop" type="button" disabled>Stop</button>
       </div>
-      <div class="playback-position">
-        <label for="playback-position">Playback position</label>
-        <span id="playback-time" aria-hidden="true">0:00 / 0:00</span>
-        <input id="playback-position" type="range" min="0" max="0" value="0" step="any"
-          aria-valuetext="0:00 of 0:00" disabled>
-      </div>
-      <p id="status" role="status">Enable JavaScript to play a tune.</p>
-      <div aria-live="polite">
-        <ul id="diagnostics" aria-label="Parse diagnostics" hidden></ul>
-      </div>
-      <p id="score-error" role="status" hidden></p>
-      <section aria-labelledby="sheet-music-heading">
+    </header>
+    <main class="workspace">
+      <section class="panel editor-panel" aria-labelledby="editor-heading">
+        <h2 id="editor-heading"><label for="bww">Tune editor</label></h2>
+        <textarea id="bww" rows="11" spellcheck="false" autocomplete="off"
+          placeholder="Paste Bagpipe Music Writer text here"></textarea>
+        <div class="transport">
+          <div class="controls">
+            <button id="play" type="button" disabled>
+              <img id="play-loading" src="loading.gif" width="18" height="18" alt="" hidden>
+              <span class="play-icon" aria-hidden="true"></span>
+              <span id="play-label">Play</span>
+            </button>
+            <button id="stop" type="button" disabled>
+              <span class="stop-icon" aria-hidden="true"></span>
+              Stop
+            </button>
+          </div>
+          <div class="playback-position">
+            <label for="playback-position">Playback position</label>
+            <span id="playback-time" aria-hidden="true">0:00 / 0:00</span>
+            <input id="playback-position" type="range" min="0" max="0" value="0" step="any"
+              aria-valuetext="0:00 of 0:00" disabled>
+          </div>
+        </div>
+        <p id="status" role="status">Enable JavaScript to play a tune.</p>
+        <div aria-live="polite">
+          <ul id="diagnostics" aria-label="Parse diagnostics" hidden></ul>
+        </div>
+        <details class="playback-options">
+          <summary>Playback options</summary>
+          <div class="option-fields">
+            <div>
+              <label for="bpm">Tempo (BPM)</label>
+              <input id="bpm" type="number" min="0" step="any" aria-describedby="bpm-help">
+              <small id="bpm-help">Leave blank to use the tune’s tempo or 90 BPM.</small>
+            </div>
+            <div>
+              <label for="grace-ms">Grace note duration (ms)</label>
+              <input id="grace-ms" type="number" min="0" step="any" value="25" required>
+            </div>
+            <div>
+              <label for="sound">Sound</label>
+              <select id="sound">
+                <option value="chanter">Chanter</option>
+                <option value="chanter-old">Original chanter</option>
+                <option value="simple">Simple tone</option>
+              </select>
+            </div>
+            <label class="drone-option"><input id="drone" type="checkbox"> Add bass and tenor drones</label>
+          </div>
+        </details>
+      </section>
+      <section class="panel score-panel" aria-labelledby="sheet-music-heading">
         <h2 id="sheet-music-heading">Sheet music</h2>
-        <div id="score"></div>
+        <p id="score-error" role="status" hidden></p>
+        <div class="score-display">
+          <img id="score-loading" src="loading.gif" width="32" height="32" alt="" hidden>
+          <div id="score"></div>
+          <p class="score-placeholder">Paste a tune to see its notation.</p>
+        </div>
       </section>
     </main>
     <footer class="site-footer">
