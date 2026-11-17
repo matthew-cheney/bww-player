@@ -3,6 +3,7 @@ const bpmInput = document.querySelector("#bpm");
 const graceInput = document.querySelector("#grace-ms");
 const soundInput = document.querySelector("#sound");
 const droneInput = document.querySelector("#drone");
+const highlightInput = document.querySelector("#highlight-note");
 const playButton = document.querySelector("#play");
 const playLoading = document.querySelector("#play-loading");
 const playLabel = document.querySelector("#play-label");
@@ -19,6 +20,7 @@ let audioContext;
 let worker;
 let tune;
 let activePlayback;
+let exampleRequest;
 
 function showStatus(message) {
   status.textContent = message;
@@ -71,12 +73,27 @@ function showScore(abc, notationError) {
 function setHighlightedNote(playback, note) {
   if (playback.highlightedNote === note) return;
   playback.highlightedNote?.classList.remove("is-playing");
-  note?.classList.add("is-playing");
+  playback.noteMarker?.remove();
   playback.highlightedNote = note;
+  if (!note) return;
+
+  const { x, y, width, height } = note.getBBox();
+  const marker = playback.noteMarker ??= document.createElementNS(
+    "http://www.w3.org/2000/svg", "rect",
+  );
+  marker.setAttribute("class", "playing-note-marker");
+  marker.setAttribute("aria-hidden", "true");
+  marker.setAttribute("x", x - 4);
+  marker.setAttribute("y", y - 4);
+  marker.setAttribute("width", width + 8);
+  marker.setAttribute("height", height + 8);
+  marker.setAttribute("rx", 4);
+  note.prepend(marker);
+  note.classList.add("is-playing");
 }
 
 function highlightAt(playback, position) {
-  if (!playback.scoreNotes?.length) return;
+  if (!highlightInput.checked || !playback.scoreNotes?.length) return;
 
   // The timeline is in playback order, so a repeat can reuse an SVG note.
   const timeline = playback.timeline;
@@ -265,9 +282,47 @@ playButton.addEventListener("click", async () => {
   }
 });
 
-for (const field of [input, bpmInput, graceInput, soundInput, droneInput]) {
+input.addEventListener("input", () => {
+  exampleRequest?.abort();
+  renderTune();
+});
+
+for (const field of [bpmInput, graceInput, soundInput, droneInput]) {
   field.addEventListener("input", renderTune);
 }
+
+for (const button of document.querySelectorAll("[data-example]")) {
+  button.addEventListener("click", async () => {
+    exampleRequest?.abort();
+    const request = new AbortController();
+    exampleRequest = request;
+
+    try {
+      const response = await fetch(`examples/${button.dataset.example}.bww`, {
+        signal: request.signal,
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+      const text = await response.text();
+      if (request.signal.aborted) return;
+
+      input.value = text;
+      renderTune();
+    } catch (error) {
+      if (!request.signal.aborted) {
+        showStatus(`Could not load ${button.textContent}: ${error.message}`);
+      }
+    } finally {
+      if (exampleRequest === request) exampleRequest = null;
+    }
+  });
+}
+
+highlightInput.addEventListener("change", () => {
+  if (!highlightInput.checked && activePlayback) {
+    setHighlightedNote(activePlayback, null);
+  }
+});
 
 positionInput.addEventListener("input", () => {
   const playback = activePlayback;

@@ -36,6 +36,14 @@
         <h2 id="editor-heading"><label for="bww">Tune editor</label></h2>
         <textarea id="bww" rows="11" spellcheck="false" autocomplete="off"
           placeholder="Paste Bagpipe Music Writer text here"></textarea>
+        <div class="tune-examples" role="group" aria-labelledby="tune-examples-label">
+          <span id="tune-examples-label">Example tunes</span>
+          <div class="example-buttons">
+            <button type="button" data-example="scotland-the-brave">Scotland the Brave</button>
+            <button type="button" data-example="aspen-bank">Aspen Bank</button>
+            <button type="button" data-example="the-clumsy-lover">The Clumsy Lover</button>
+          </div>
+        </div>
         <div class="transport">
           <div class="controls">
             <button id="play" type="button" disabled>
@@ -79,7 +87,8 @@
                 <option value="simple">Simple tone</option>
               </select>
             </div>
-            <label class="drone-option"><input id="drone" type="checkbox"> Add bass and tenor drones</label>
+            <label class="checkbox-option"><input id="drone" type="checkbox"> Add bass and tenor drones</label>
+            <label class="checkbox-option"><input id="highlight-note" type="checkbox" checked> Highlight current note</label>
           </div>
         </details>
       </section>
@@ -89,7 +98,7 @@
         <div class="score-display">
           <img id="score-loading" src="loading.gif" width="32" height="32" alt="" hidden>
           <div id="score"></div>
-          <p class="score-placeholder">Paste a tune to see its notation.</p>
+          <p class="score-placeholder">Paste a tune or choose an example to see its notation.</p>
         </div>
       </section>
     </main>

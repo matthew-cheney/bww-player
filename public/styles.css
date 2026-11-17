@@ -159,6 +159,29 @@ textarea::placeholder {
   color: var(--muted);
 }
 
+.tune-examples {
+  margin-top: 0.75rem;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.example-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.35rem;
+}
+
+.example-buttons button {
+  min-height: 2rem;
+  padding: 0.25rem 0.55rem;
+}
+
+.example-buttons button:hover {
+  background: var(--field);
+  border-color: var(--muted);
+}
+
 :where(a, button, input, select, textarea, summary):focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 3px;
@@ -321,7 +344,7 @@ input {
   width: 7rem;
 }
 
-.drone-option {
+.checkbox-option {
   flex-basis: 100%;
 }
 
@@ -345,8 +368,16 @@ input {
 }
 
 #score .abcjs-note.is-playing {
-  color: #005fcc;
+  color: #712600;
   fill: currentColor;
+}
+
+#score .playing-note-marker {
+  fill: #ffca58;
+  fill-opacity: 0.68;
+  stroke: #a44d07;
+  stroke-width: 1;
+  pointer-events: none;
 }
 
 #score-loading,
