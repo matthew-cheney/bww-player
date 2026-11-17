@@ -43,6 +43,40 @@ textarea {
   margin-top: 0.75rem;
 }
 
+.playback-position {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.25rem 0.75rem;
+  margin-top: 0.75rem;
+  font-size: 0.875rem;
+}
+
+.playback-position label {
+  margin: 0;
+}
+
+#playback-time {
+  font-variant-numeric: tabular-nums;
+}
+
+#playback-position {
+  grid-column: 1 / -1;
+  width: 100%;
+  margin: 0;
+}
+
+#score {
+  min-height: 6rem;
+  border: 1px solid GrayText;
+  border-radius: 0.25rem;
+}
+
+#score:not(:empty) {
+  background: white;
+  color: #171717;
+  color-scheme: light;
+}
+
 .playback-options {
   margin-block: 0.75rem;
 }

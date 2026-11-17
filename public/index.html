@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>BWW Player</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/abcjs@6.7.0/dist/abcjs-basic-min.js" defer></script>
     <script src="player.js" defer></script>
   </head>
   <body>
@@ -40,10 +41,21 @@
         <button id="play" type="button" disabled>Play</button>
         <button id="stop" type="button" disabled>Stop</button>
       </div>
+      <div class="playback-position">
+        <label for="playback-position">Playback position</label>
+        <span id="playback-time" aria-hidden="true">0:00 / 0:00</span>
+        <input id="playback-position" type="range" min="0" max="0" value="0" step="any"
+          aria-valuetext="0:00 of 0:00" disabled>
+      </div>
       <p id="status" role="status">Enable JavaScript to play a tune.</p>
       <div aria-live="polite">
         <ul id="diagnostics" aria-label="Parse diagnostics" hidden></ul>
       </div>
+      <p id="score-error" role="status" hidden></p>
+      <section aria-labelledby="sheet-music-heading">
+        <h2 id="sheet-music-heading">Sheet music</h2>
+        <div id="score"></div>
+      </section>
     </main>
     <footer class="site-footer">
       Built by <a href="https://github.com/matthew-cheney">Matthew Cheney</a>

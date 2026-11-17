@@ -6,8 +6,12 @@ const soundInput = document.querySelector("#sound");
 const droneInput = document.querySelector("#drone");
 const playButton = document.querySelector("#play");
 const stopButton = document.querySelector("#stop");
+const positionInput = document.querySelector("#playback-position");
+const playbackTime = document.querySelector("#playback-time");
 const status = document.querySelector("#status");
 const diagnosticsList = document.querySelector("#diagnostics");
+const score = document.querySelector("#score");
+const scoreError = document.querySelector("#score-error");
 
 let audioContext;
 let worker;
@@ -29,15 +33,62 @@ function showDiagnostics(diagnostics) {
   diagnosticsList.hidden = items.length === 0;
 }
 
-function finish(playback, message) {
+function clearScore() {
+  score.replaceChildren();
+  scoreError.hidden = true;
+  scoreError.textContent = "";
+}
+
+function showScore(abc, notationError) {
+  if (abc) {
+    try {
+      if (!window.ABCJS) throw new Error("Could not load abcjs.");
+      window.ABCJS.renderAbc(score, abc, { responsive: "resize" });
+      if (!score.querySelector("svg")) throw new Error("No notation was produced.");
+    } catch (error) {
+      clearScore();
+      notationError = error.message;
+    }
+  }
+  if (notationError) {
+    scoreError.hidden = false;
+    scoreError.textContent = `Sheet music error: ${notationError}`;
+  }
+}
+
+function formatTime(time) {
+  const seconds = Math.floor(time);
+  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
+}
+
+function showPosition(position, duration) {
+  positionInput.max = duration;
+  positionInput.valueAsNumber = position;
+  const elapsed = formatTime(position);
+  const total = formatTime(duration);
+  const display = `${elapsed} / ${total}`;
+  if (playbackTime.textContent !== display) {
+    playbackTime.textContent = display;
+    positionInput.setAttribute("aria-valuetext", `${elapsed} of ${total}`);
+  }
+}
+
+function stopSource(playback) {
+  if (!playback.source) return;
+  playback.source.onended = null;
+  playback.source.stop();
+  playback.source.disconnect();
+  playback.source = null;
+}
+
+function finish(playback, message, position = 0) {
   if (activePlayback !== playback) return;
 
   activePlayback = null;
-  if (playback.source) {
-    playback.source.onended = null;
-    playback.source.stop();
-    playback.source.disconnect();
-  }
+  clearInterval(playback.positionTimer);
+  stopSource(playback);
+  showPosition(position, playback.samples?.duration ?? 0);
+  positionInput.disabled = true;
   showStatus(message);
 }
 
@@ -46,19 +97,34 @@ function resetWorker() {
   worker = null;
 }
 
+function startSource(playback, offset) {
+  stopSource(playback);
+  const source = audioContext.createBufferSource();
+  source.buffer = playback.samples;
+  source.connect(audioContext.destination);
+  source.onended = () => finish(playback, "Finished.", playback.samples.duration);
+  const startTime = audioContext.currentTime;
+  source.start(startTime, offset);
+  playback.source = source;
+  playback.startTime = startTime;
+  playback.offset = offset;
+  showPosition(offset, playback.samples.duration);
+}
+
 async function playWav(playback, wav) {
   await playback.audioReady;
   if (activePlayback !== playback) return;
 
-  const samples = await audioContext.decodeAudioData(wav.buffer);
+  playback.samples = await audioContext.decodeAudioData(wav.buffer);
   if (activePlayback !== playback) return;
 
-  const source = audioContext.createBufferSource();
-  source.buffer = samples;
-  source.connect(audioContext.destination);
-  source.onended = () => finish(playback, "Finished.");
-  source.start();
-  playback.source = source;
+  startSource(playback, 0);
+  positionInput.disabled = false;
+  playback.positionTimer = setInterval(() => {
+    const duration = playback.samples.duration;
+    const position = playback.offset + audioContext.currentTime - playback.startTime;
+    showPosition(Math.min(position, duration), duration);
+  }, 100);
   showStatus("Playing…");
 }
 
@@ -74,6 +140,7 @@ function createWorker() {
     }
     playback.rendering = false;
     if (data.diagnostics) showDiagnostics(data.diagnostics);
+    if (playback.text === input.value) showScore(data.abc, data.scoreError);
     if (data.error) {
       if (data.resetWorker) resetWorker();
       finish(playback, data.error);
@@ -121,7 +188,9 @@ playButton.addEventListener("click", () => {
     return;
   }
 
-  const playback = { rendering: true };
+  clearScore();
+  showPosition(0, 0);
+  const playback = { text, rendering: true };
   activePlayback = playback;
   try {
     audioContext ??= new AudioContext();
@@ -145,6 +214,19 @@ playButton.addEventListener("click", () => {
   } catch (error) {
     resetWorker();
     finish(playback, `Loading error: ${error.message}`);
+  }
+});
+
+input.addEventListener("input", clearScore);
+
+positionInput.addEventListener("input", () => {
+  const playback = activePlayback;
+  if (!playback?.source) return;
+
+  try {
+    startSource(playback, positionInput.valueAsNumber);
+  } catch (error) {
+    finish(playback, `Playback error: ${error.message}`);
   }
 });
 
