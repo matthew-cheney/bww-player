@@ -1,25 +1,35 @@
 const input = document.querySelector("#bww");
-const playbackOptions = document.querySelector(".playback-options");
 const bpmInput = document.querySelector("#bpm");
 const graceInput = document.querySelector("#grace-ms");
 const soundInput = document.querySelector("#sound");
 const droneInput = document.querySelector("#drone");
 const playButton = document.querySelector("#play");
+const playLoading = document.querySelector("#play-loading");
+const playLabel = document.querySelector("#play-label");
 const stopButton = document.querySelector("#stop");
 const positionInput = document.querySelector("#playback-position");
 const playbackTime = document.querySelector("#playback-time");
 const status = document.querySelector("#status");
 const diagnosticsList = document.querySelector("#diagnostics");
 const score = document.querySelector("#score");
+const scoreLoading = document.querySelector("#score-loading");
 const scoreError = document.querySelector("#score-error");
 
 let audioContext;
 let worker;
+let tune;
 let activePlayback;
 
 function showStatus(message) {
   status.textContent = message;
-  playButton.disabled = Boolean(activePlayback);
+  const rendering = Boolean(tune?.rendering);
+  const waitingForScore = rendering && !tune.scoreReceived;
+  playLoading.hidden = !rendering;
+  playLabel.textContent = rendering ? "Generating audio…" : "Play";
+  playButton.setAttribute("aria-busy", String(rendering));
+  scoreLoading.hidden = !waitingForScore;
+  score.setAttribute("aria-busy", String(waitingForScore));
+  playButton.disabled = !tune?.wav || Boolean(activePlayback);
   stopButton.disabled = !activePlayback;
 }
 
@@ -34,10 +44,6 @@ function showDiagnostics(diagnostics) {
 }
 
 function clearScore() {
-  if (activePlayback) {
-    setHighlightedNote(activePlayback, null);
-    activePlayback.scoreNotes = null;
-  }
   score.replaceChildren();
   scoreError.hidden = true;
   scoreError.textContent = "";
@@ -145,13 +151,7 @@ function startSource(playback, offset) {
   highlightAt(playback, offset);
 }
 
-async function playWav(playback, wav) {
-  await playback.audioReady;
-  if (activePlayback !== playback) return;
-
-  playback.samples = await audioContext.decodeAudioData(wav.buffer);
-  if (activePlayback !== playback) return;
-
+function playSamples(playback) {
   startSource(playback, 0);
   positionInput.disabled = false;
   function updatePosition() {
@@ -167,43 +167,50 @@ async function playWav(playback, wav) {
 
 function createWorker() {
   const nextWorker = new Worker("render-worker.js");
-  nextWorker.onmessage = async ({ data }) => {
-    const playback = activePlayback;
-    if (worker !== nextWorker || !playback) return;
+  nextWorker.onmessage = ({ data }) => {
+    if (worker !== nextWorker || !tune?.rendering) return;
 
     if (data.status) {
       showStatus(data.status);
       return;
     }
-    playback.rendering = false;
-    if (data.diagnostics) showDiagnostics(data.diagnostics);
-    if (playback.text === input.value) playback.scoreNotes = showScore(data.abc, data.scoreError);
-    if (data.error) {
-      if (data.resetWorker) resetWorker();
-      finish(playback, data.error);
+    if (data.type === "score") {
+      showDiagnostics(data.diagnostics);
+      tune.scoreReceived = true;
+      tune.scoreNotes = showScore(data.abc, data.scoreError);
+      showStatus("Rendering audio…");
       return;
     }
 
-    try {
-      playback.timeline = data.timeline;
-      showStatus("Preparing audio…");
-      await playWav(playback, data.wav);
-    } catch (error) {
-      finish(playback, `Playback error: ${error.message}`);
+    tune.rendering = false;
+    if (data.error) {
+      if (data.resetWorker) resetWorker();
+      showStatus(data.error);
+      return;
     }
+
+    tune.timeline = data.timeline;
+    tune.wav = data.wav;
+    showStatus("Ready to play.");
   };
   nextWorker.onerror = (event) => {
     if (worker !== nextWorker) return;
     resetWorker();
-    if (activePlayback) {
-      finish(activePlayback, `Worker error: ${event.message || "Could not load the renderer."}`);
+    if (tune?.rendering) {
+      tune.rendering = false;
+      showStatus(`Worker error: ${event.message || "Could not load the renderer."}`);
     }
   };
   return nextWorker;
 }
 
-playButton.addEventListener("click", () => {
+function renderTune() {
+  if (tune?.rendering) resetWorker();
+  tune = null;
+  if (activePlayback) finish(activePlayback, "");
+  clearScore();
   showDiagnostics([]);
+  showPosition(0, 0);
   const text = input.value;
   if (!text.trim()) {
     showStatus("Paste a BWW tune first.");
@@ -213,49 +220,54 @@ playButton.addEventListener("click", () => {
   const bpm = bpmInput.value === "" ? null : bpmInput.valueAsNumber;
   if (!bpmInput.validity.valid || (bpm !== null && (!Number.isFinite(bpm) || bpm <= 0))) {
     showStatus("Enter a tempo greater than zero, or leave it blank.");
-    playbackOptions.open = true;
-    bpmInput.focus();
     return;
   }
 
   const graceMs = graceInput.valueAsNumber;
   if (!graceInput.validity.valid || !Number.isFinite(graceMs)) {
     showStatus("Enter a grace note duration of zero or greater.");
-    playbackOptions.open = true;
-    graceInput.focus();
     return;
   }
 
-  clearScore();
-  showPosition(0, 0);
-  const playback = { text, rendering: true };
-  activePlayback = playback;
+  tune = { rendering: true };
   try {
-    audioContext ??= new AudioContext();
-    playback.audioReady = audioContext.resume();
-    playback.audioReady.catch((error) => {
-      if (activePlayback !== playback) return;
-      if (playback.rendering) resetWorker();
-      finish(playback, `Playback error: ${error.message}`);
-    });
-  } catch (error) {
-    finish(playback, `Playback error: ${error.message}`);
-    return;
-  }
-
-  try {
-    showStatus(worker ? "Rendering tune…" : "Loading Pyodide and pybww…");
+    showStatus(worker ? "Reading tune…" : "Loading Pyodide and pybww…");
     worker ??= createWorker();
     worker.postMessage({
       text, bpm, graceMs, sound: soundInput.value, drone: droneInput.checked,
     });
   } catch (error) {
     resetWorker();
-    finish(playback, `Loading error: ${error.message}`);
+    tune.rendering = false;
+    showStatus(`Loading error: ${error.message}`);
+  }
+}
+
+playButton.addEventListener("click", async () => {
+  if (!tune?.wav || activePlayback) return;
+
+  const renderedTune = tune;
+  const playback = { timeline: renderedTune.timeline, scoreNotes: renderedTune.scoreNotes };
+  activePlayback = playback;
+  showStatus("Preparing audio…");
+  try {
+    audioContext ??= new AudioContext();
+    await audioContext.resume();
+    if (activePlayback !== playback) return;
+
+    renderedTune.samples ??= await audioContext.decodeAudioData(renderedTune.wav.slice().buffer);
+    if (activePlayback !== playback) return;
+
+    playback.samples = renderedTune.samples;
+    playSamples(playback);
+  } catch (error) {
+    finish(playback, `Playback error: ${error.message}`);
   }
 });
 
-input.addEventListener("input", clearScore);
+for (const field of [input, bpmInput, graceInput, soundInput, droneInput]) {
+  field.addEventListener("input", renderTune);
+}
 
 positionInput.addEventListener("input", () => {
   const playback = activePlayback;
@@ -272,8 +284,7 @@ stopButton.addEventListener("click", () => {
   const playback = activePlayback;
   if (!playback) return;
 
-  if (playback.rendering) resetWorker();
   finish(playback, "Stopped.");
 });
 
-showStatus("Ready.");
+renderTune();
