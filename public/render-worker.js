@@ -1,5 +1,5 @@
 const PYODIDE_URL = "https://cdn.jsdelivr.net/pyodide/v0.27.7/full/";
-const WHEEL = "vendor/pybww-0.1.0+c382c42-py3-none-any.whl";
+const WHEEL = "vendor/pybww-0.1.0+5f3655c-py3-none-any.whl";
 
 let renderer;
 
@@ -10,15 +10,15 @@ async function loadRenderer() {
   pyodide.runPython(`
 from pybww import Tune, parse_text
 
-if not callable(getattr(Tune, "to_wav", None)):
-    raise RuntimeError("The pybww wheel must provide Tune.to_wav().")
+if not callable(getattr(Tune, "to_wav_with_timeline", None)):
+    raise RuntimeError("The pybww wheel must provide Tune.to_wav_with_timeline().")
 
 def render_bww(text, bpm, grace_ms, sound, drone):
     result = parse_text(text, strict=False)
     diagnostics = [(item.severity, item.message) for item in result.diagnostics]
 
     if result.tune is None:
-        return diagnostics, "Parse error: No playable tune was found.", None, None, None
+        return diagnostics, "Parse error: No playable tune was found.", None, None, None, []
 
     abc = None
     score_error = None
@@ -28,10 +28,14 @@ def render_bww(text, bpm, grace_ms, sound, drone):
         score_error = str(error)
 
     try:
-        wav = result.tune.to_wav(bpm=bpm, grace_ms=grace_ms, sound=sound, drone=drone)
+        wav, timeline = result.tune.to_wav_with_timeline(
+            bpm=bpm, grace_ms=grace_ms, sound=sound, drone=drone
+        )
     except Exception as error:
-        return diagnostics, f"Rendering error: {error}", None, abc, score_error
-    return diagnostics, None, wav, abc, score_error
+        return diagnostics, f"Rendering error: {error}", None, abc, score_error, []
+    return diagnostics, None, wav, abc, score_error, [
+        (entry.start_seconds, entry.note_index) for entry in timeline
+    ]
 `);
   return pyodide.globals.get("render_bww");
 }
@@ -48,8 +52,8 @@ self.onmessage = async ({ data: { text, bpm, graceMs, sound, drone } }) => {
     self.postMessage({ status: "Rendering tune…" });
     const result = renderer(text, bpm, graceMs, sound, drone);
     try {
-      const [diagnostics, error, wav, abc, scoreError] = result.toJs();
-      self.postMessage({ diagnostics, error, wav, abc, scoreError }, wav ? [wav.buffer] : []);
+      const [diagnostics, error, wav, abc, scoreError, timeline] = result.toJs();
+      self.postMessage({ diagnostics, error, wav, abc, scoreError, timeline }, wav ? [wav.buffer] : []);
     } finally {
       result.destroy();
     }

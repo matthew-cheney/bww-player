@@ -2,6 +2,7 @@
 
 Paste Bagpipe Music Writer (BWW) text into the [BWW Player](https://matthew-cheney.github.io/bww-player/).
 Choose **Play** to hear the tune and fill in the sheet music below the controls.
+The current note is highlighted in blue as the tune plays.
 Drag the **Playback position** slider or use its arrow keys to skip around.
 Use **Stop** to cancel rendering or stop playback.
 The status area shows progress and errors.
@@ -17,7 +18,7 @@ and drones off. Changes apply the next time you press **Play**.
 
 The browser loads Pyodide 0.27.7 from jsDelivr and a pinned pybww wheel from
 the site. Pasted text stays in the browser. pybww parses the tune, exports
-ABC notation, and synthesizes WAV audio in a Web Worker. The page loads
+ABC notation, and synthesizes WAV audio with a note timeline in a Web Worker. The page loads
 abcjs 6.7.0 from jsDelivr to draw the notation as SVG.
 
 ## Run locally
@@ -32,8 +33,8 @@ Open [localhost:8000](http://127.0.0.1:8000/).
 
 ## Update the pybww wheel
 
-The bundled pybww `0.1.0+c382c42` wheel was built from commit
-`c382c42fcf4814d71614e139f0cd16694797ae93`. The commit suffix is a local
+The bundled pybww `0.1.0+5f3655c` wheel was built from commit
+`5f3655c3588df4ca133d5a655601cfb45d155fde`. The commit suffix is a local
 version added to the build copy of `pyproject.toml` because the library
 version was still `0.1.0`. Build a wheel from the library checkout and place
 it in `public/vendor/`. These commands assume sibling checkouts and run

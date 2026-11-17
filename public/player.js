@@ -34,6 +34,10 @@ function showDiagnostics(diagnostics) {
 }
 
 function clearScore() {
+  if (activePlayback) {
+    setHighlightedNote(activePlayback, null);
+    activePlayback.scoreNotes = null;
+  }
   score.replaceChildren();
   scoreError.hidden = true;
   scoreError.textContent = "";
@@ -43,8 +47,9 @@ function showScore(abc, notationError) {
   if (abc) {
     try {
       if (!window.ABCJS) throw new Error("Could not load abcjs.");
-      window.ABCJS.renderAbc(score, abc, { responsive: "resize" });
+      window.ABCJS.renderAbc(score, abc, { responsive: "resize", add_classes: true });
       if (!score.querySelector("svg")) throw new Error("No notation was produced.");
+      return score.querySelectorAll(".abcjs-note");
     } catch (error) {
       clearScore();
       notationError = error.message;
@@ -54,6 +59,33 @@ function showScore(abc, notationError) {
     scoreError.hidden = false;
     scoreError.textContent = `Sheet music error: ${notationError}`;
   }
+  return null;
+}
+
+function setHighlightedNote(playback, note) {
+  if (playback.highlightedNote === note) return;
+  playback.highlightedNote?.classList.remove("is-playing");
+  note?.classList.add("is-playing");
+  playback.highlightedNote = note;
+}
+
+function highlightAt(playback, position) {
+  if (!playback.scoreNotes?.length) return;
+
+  // The timeline is in playback order, so a repeat can reuse an SVG note.
+  const timeline = playback.timeline;
+  let first = 0;
+  let last = timeline.length;
+  while (first < last) {
+    const middle = Math.floor((first + last) / 2);
+    if (timeline[middle][0] <= position) {
+      first = middle + 1;
+    } else {
+      last = middle;
+    }
+  }
+  const noteIndex = timeline[first - 1]?.[1];
+  setHighlightedNote(playback, playback.scoreNotes[noteIndex] ?? null);
 }
 
 function formatTime(time) {
@@ -62,7 +94,7 @@ function formatTime(time) {
 }
 
 function showPosition(position, duration) {
-  positionInput.max = duration;
+  if (positionInput.max !== String(duration)) positionInput.max = duration;
   positionInput.valueAsNumber = position;
   const elapsed = formatTime(position);
   const total = formatTime(duration);
@@ -85,7 +117,8 @@ function finish(playback, message, position = 0) {
   if (activePlayback !== playback) return;
 
   activePlayback = null;
-  clearInterval(playback.positionTimer);
+  cancelAnimationFrame(playback.positionFrame);
+  setHighlightedNote(playback, null);
   stopSource(playback);
   showPosition(position, playback.samples?.duration ?? 0);
   positionInput.disabled = true;
@@ -109,6 +142,7 @@ function startSource(playback, offset) {
   playback.startTime = startTime;
   playback.offset = offset;
   showPosition(offset, playback.samples.duration);
+  highlightAt(playback, offset);
 }
 
 async function playWav(playback, wav) {
@@ -120,11 +154,14 @@ async function playWav(playback, wav) {
 
   startSource(playback, 0);
   positionInput.disabled = false;
-  playback.positionTimer = setInterval(() => {
+  function updatePosition() {
     const duration = playback.samples.duration;
-    const position = playback.offset + audioContext.currentTime - playback.startTime;
-    showPosition(Math.min(position, duration), duration);
-  }, 100);
+    const position = Math.min(playback.offset + audioContext.currentTime - playback.startTime, duration);
+    showPosition(position, duration);
+    highlightAt(playback, position);
+    playback.positionFrame = requestAnimationFrame(updatePosition);
+  }
+  playback.positionFrame = requestAnimationFrame(updatePosition);
   showStatus("Playing…");
 }
 
@@ -140,7 +177,7 @@ function createWorker() {
     }
     playback.rendering = false;
     if (data.diagnostics) showDiagnostics(data.diagnostics);
-    if (playback.text === input.value) showScore(data.abc, data.scoreError);
+    if (playback.text === input.value) playback.scoreNotes = showScore(data.abc, data.scoreError);
     if (data.error) {
       if (data.resetWorker) resetWorker();
       finish(playback, data.error);
@@ -148,6 +185,7 @@ function createWorker() {
     }
 
     try {
+      playback.timeline = data.timeline;
       showStatus("Preparing audio…");
       await playWav(playback, data.wav);
     } catch (error) {
