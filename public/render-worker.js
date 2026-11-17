@@ -1,5 +1,5 @@
 const PYODIDE_URL = "https://cdn.jsdelivr.net/pyodide/v0.27.7/full/";
-const WHEEL = "vendor/pybww-0.1.0+5f3655c-py3-none-any.whl";
+const WHEEL = "vendor/pybww-0.1.0+9ef4229-py3-none-any.whl";
 
 let renderer;
 
@@ -8,10 +8,8 @@ async function loadRenderer() {
   const pyodide = await loadPyodide({ indexURL: PYODIDE_URL });
   await pyodide.loadPackage(new URL(WHEEL, self.location.href).href);
   pyodide.runPython(`
-from pybww import Tune, parse_text
-
-if not callable(getattr(Tune, "to_wav_with_timeline", None)):
-    raise RuntimeError("The pybww wheel must provide Tune.to_wav_with_timeline().")
+from pybww import parse_text
+from pybww.audio import render_wav
 
 def render_bww(text, bpm, grace_ms, sound, drone):
     result = parse_text(text, strict=False)
@@ -28,8 +26,8 @@ def render_bww(text, bpm, grace_ms, sound, drone):
         score_error = str(error)
 
     try:
-        wav, timeline = result.tune.to_wav_with_timeline(
-            bpm=bpm, grace_ms=grace_ms, sound=sound, drone=drone
+        wav, timeline = render_wav(
+            result.tune, bpm=bpm, grace_ms=grace_ms, sound=sound, drone=drone
         )
     except Exception as error:
         return diagnostics, f"Rendering error: {error}", None, abc, score_error, []
