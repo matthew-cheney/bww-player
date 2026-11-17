@@ -42,6 +42,11 @@ def render_bww(text, bpm, grace_ms, sound, drone, send_score):
 }
 
 function sendScore(diagnostics, abc, scoreError) {
+  // Keep bagpipe engraving while printing only the two sharps in the signature.
+  if (abc) {
+    const scoreAbc = abc.replace(/(^|\[)K:Hp(?=$|\])/gm, "$1K:Amix");
+    if (scoreAbc !== abc) abc = "%%bagpipes\n" + scoreAbc;
+  }
   self.postMessage({ type: "score", diagnostics: diagnostics.toJs(), abc, scoreError });
 }
 
