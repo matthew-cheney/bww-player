@@ -77,6 +77,11 @@ textarea {
   color-scheme: light;
 }
 
+#score .abcjs-note.is-playing {
+  color: #005fcc;
+  fill: currentColor;
+}
+
 .playback-options {
   margin-block: 0.75rem;
 }
